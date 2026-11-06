@@ -8,6 +8,13 @@ const messages = {
 	without: `test: subject\nbody\nfooter\n\n`,
 	inSubject: `test: subject Signed-off-by:\nbody\nfooter\n\n`,
 	inBody: `test: subject\nbody Signed-off-by:\nfooter\n\n`,
+	withSignoffAndCoAuthor: `test: subject
+
+message body
+
+Signed-off-by: Alice
+Co-Authored-By: Someone <some@example.com>
+`,
 	withSignoffAndComments: `test: subject
 
 message body
@@ -36,6 +43,7 @@ const parsed = {
 	inBody: parse(messages.inBody),
 	withSignoffAndComments: parse(messages.withSignoffAndComments),
 	withSignoffAndCherryPick: parse(messages.withSignoffAndCherryPick),
+	withSignoffAndCoAuthor: parse(messages.withSignoffAndCoAuthor),
 };
 
 test('empty against "always signed-off-by" should fail', async () => {
@@ -112,6 +120,18 @@ test("cherry pick marker should be ignored", async () => {
 
 test('cherry pick marker with "never signed-off-by" should fail', async () => {
 	const [actual] = signedOffBy(await parsed.withSignoffAndCherryPick, "never", "Signed-off-by:");
+	const expected = false;
+	expect(actual).toEqual(expected);
+});
+
+test("signoff should be found among other trailers", async () => {
+	const [actual] = signedOffBy(await parsed.withSignoffAndCoAuthor, "always", "Signed-off-by:");
+	const expected = true;
+	expect(actual).toEqual(expected);
+});
+
+test('signoff should be rejected among other trailers on "never signed-off-by"', async () => {
+	const [actual] = signedOffBy(await parsed.withSignoffAndCoAuthor, "never", "Signed-off-by:");
 	const expected = false;
 	expect(actual).toEqual(expected);
 });
