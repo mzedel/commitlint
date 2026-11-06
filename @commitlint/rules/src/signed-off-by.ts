@@ -20,7 +20,9 @@ export const signedOffBy: SyncRule<string> = (parsed, when = "always", value = "
 	const negated = when === "never";
 	const hasSignedOffBy =
 		// empty commit message
-		last ? last.startsWith(value) : false;
+		last
+			? last.startsWith(value) || toLines(parsed.footer).some((ln) => ln.startsWith(value))
+			: false;
 
 	return [
 		negated ? !hasSignedOffBy : hasSignedOffBy,
